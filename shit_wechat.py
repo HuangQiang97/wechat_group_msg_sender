@@ -1,8 +1,4 @@
-import ctypes
-import inspect
 import logging
-import os
-import sys
 import threading
 import time
 import tkinter as tk
@@ -16,58 +12,19 @@ logging.basicConfig(level=logging.INFO, filename='wechat_group.log', filemode='a
 logging.info('启动')
 
 
-def net():
-    global send_init_flag, msg, check_buttons, send_time, msg_input, group_name, groups, log_msg, group_name_flag, list_items, bot
-    try:
-        bot = Bot(cache_path=True)
-        bot.groups(update=True, contact_only=False)
-        groups = bot.groups()
-        group_name_flag = True
-        1/len(groups)
-    except:
-        tk.messagebox.showerror(
-            'Error', '登陆失败！请尝试登录网页版微信： https://wx.qq.com ，若网页版无法登录，则此脚本无法正常运行！')
-        exit(-1)
-    while not send_init_flag:
-        pass
-    while True:
-        h = datetime.now().hour
-        logging.info('确认时间')
-        now = datetime.now()
-        now = str(now.hour) + ':' + str(now.minute) + '--->'
-        if h == send_time:
-            for i in range(len(group_name)):
-                single_group = group_name[i]
-                my_group = bot.groups().search(single_group)[0]
-                logging.info('开始发送到：' + single_group)
-                log_msg.set(now + '开始发送到：' + single_group)
-                my_group.send_msg(msg)
-            logging.info('发送完毕，24小时后再次确认时间自动发送')
-            log_msg.set(now + '发送完毕，24小时候再次确认时间自动发送')
-            time.sleep(60 * 60 * 24)
-        else:
-            logging.info('未到发送时间，一小时后再次自动确认时间')
-            log_msg.set(now + '未到发送时间，一小时后再次自动确认时间')
-            time.sleep(60 * 60)
-
-
 def gui():
-    global send_init_flag, msg, check_buttons, send_time, msg_input, group_name, groups, log_msg, group_name_flag, list_items, bot
-    while not group_name_flag:
-        pass
+    global check_buttons, send_time, msg_input,  groups, log_msg,  list_items
     window = tk.Tk()
     window.title('shit_wechat')
     window.geometry('600x650')
 
     label = tk.Label(window, text='要发送的消息：', font=('Arial', 12), width=12)
     label.place(x=10, y=10)
-
     msg_input = tk.Entry(window, show=None, font=('Arial', 14))
     msg_input.place(x=150, y=10)
 
     label = tk.Label(window, text='要发送的群：', font=('Arial', 12), width=12)
     label.place(x=10, y=50)
-
     check_buttons = [tk.IntVar() for _ in range(len(groups))]
     for i in range(len(groups)):
         group = groups[i].name
@@ -77,11 +34,11 @@ def gui():
 
     label = tk.Label(window, text='发送时间：', font=('Arial', 12), width=12)
     label.place(x=10, y=300)
-
     hour = tk.StringVar()
     hour.set(['小时'] + [x for x in range(24)])
     list_items = tk.Listbox(window, listvariable=hour, height=6)
     list_items.place(x=145, y=300)
+
     log_msg = tk.StringVar()
     log_msg.set('logging msg')
     label = tk.Label(window, textvariable=log_msg,
@@ -96,7 +53,7 @@ def gui():
 
 
 def click():
-    global send_init_flag, msg, check_buttons, send_time, msg_input, group_name, groups, log_msg, group_name_flag, list_items, bot
+    global send_init_flag, msg, check_buttons, send_time, msg_input, group_name, groups, list_items
     msg = msg_input.get()
     for i in range(len(check_buttons)):
         if check_buttons[i].get() == 1:
@@ -111,24 +68,50 @@ def click():
 group_name = []
 msg = None
 send_time = None
+
 groups = []
 log_msg = None
-group_name_flag = False
 send_init_flag = False
+
 msg_input = None
 check_buttons = None
 list_items = None
-bot = None
+my_group = None
 
-net_thread = threading.Thread(target=net, name='init_thread')
-net_thread.setDaemon(True)
-net_thread.start()
+try:
+    bot = Bot(cache_path=True)
+    bot.groups(update=True, contact_only=False)
+    groups = bot.groups()
+    1/len(groups)
+except:
+    tk.messagebox.showerror(
+        'Error', '登陆失败！请尝试登录网页版微信： https://wx.qq.com ，若网页版无法登录，则此脚本无法正常运行！')
+    exit(-1)
+
 
 gui_thread = threading.Thread(target=gui, name='gui_thread')
 gui_thread.setDaemon(True)
 gui_thread.start()
 
-
+while not send_init_flag:
+    pass
 while True:
-    if not gui_thread.isAlive():
-        exit()
+    h = datetime.now().hour
+    logging.info('确认时间')
+    now = datetime.now()
+    now = str(now.hour) + ':' + str(now.minute) + '--->'
+    if h == send_time:
+        for i in range(len(group_name)):
+            single_group = group_name[i]
+            my_group = bot.groups().search(single_group)[0]
+            logging.info('开始发送到：' + single_group)
+            log_msg.set(now + '开始发送到：' + single_group)
+            my_group.send_msg(msg)
+        logging.info('发送完毕，24小时后再次确认时间自动发送')
+        log_msg.set(now + '发送完毕，24小时候再次确认时间自动发送')
+        time.sleep(60 * 60 * 24)
+    else:
+        logging.info('未到发送时间，一小时后再次自动确认时间')
+        log_msg.set(now + '未到发送时间，一小时后再次自动确认时间')
+        time.sleep(60 * 60)
+
