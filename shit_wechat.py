@@ -108,7 +108,7 @@ while True:
             log_msg.set(now + '开始发送到：' + single_group)
             my_group.send_msg(msg)
         logging.info('发送完毕，24小时后再次确认时间自动发送')
-        log_msg.set(now + '发送完毕，24小时候再次确认时间自动发送')
+        log_msg.set(now + '发送完毕，24小时后再次确认时间自动发送')
         time.sleep(60 * 60 * 24)
     else:
         logging.info('未到发送时间，一小时后再次自动确认时间')
